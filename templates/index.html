@@ -59,6 +59,12 @@
         </tbody>
       </table>
     </script>
+    <div id="camera-capture">
+      <button id="capture">take a picture</button>
+      <canvas id="canvas" class="display: hidden"></canvas>
+      <img id="img">
+      <video id="camera" autoplay width="250" height="250"></video>
+    </div>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -153,6 +159,74 @@
         $("#result").html(result_template({ result: result, hit: hit }));
       });
     });
+
+    $(function() {
+      //videoタグを取得
+      var video = document.getElementById('camera');
+      //カメラが起動できたかのフラグ
+      var localMediaStream = null;
+      //カメラ使えるかチェック
+      var hasGetUserMedia = function() {
+        return (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+          navigator.mozGetUserMedia || navigator.msGetUserMedia);
+      };
+
+      //エラー
+      var onFailSoHard = function(e) {
+        console.log('エラー!', e);
+      };
+
+      if(!hasGetUserMedia()) {
+        alert("未対応ブラウザです。");
+      } else {
+        window.URL = window.URL || window.webkitURL;
+        navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+        navigator.getUserMedia({video: true}, function(stream) {
+          video.src = window.URL.createObjectURL(stream);
+          localMediaStream = stream;
+        }, onFailSoHard);
+      }
+      $("#capture").click(function() {
+        if (localMediaStream) {
+          var canvas = document.getElementById('canvas');
+          //canvasの描画モードを2sに
+          var ctx = canvas.getContext('2d');
+          var img = document.getElementById('img');
+
+          //videoの縦幅横幅を取得
+          var w = video.offsetWidth;
+          var h = video.offsetHeight;
+
+          //同じサイズをcanvasに指定
+          canvas.setAttribute("width", w);
+          canvas.setAttribute("height", h);
+
+          //canvasにコピー
+          ctx.drawImage(video, 0, 0, w, h);
+          //imgにpng形式で書き出し
+          img.src = canvas.toDataURL('image/png');
+
+
+          var dataURL = canvas.toDataURL("image/png");
+          var blob = dataURItoBlob(dataURL);
+          var fd = new FormData();
+          fd.append("file", blob);
+          $.ajax({
+            type: "POST",
+            url: "/predict",
+            data: fd,
+            processData: false,
+            contentType: false,
+            cache: false,
+          }).done(function(result) {
+            console.dir(result);
+            var hit = _(result).map(function (v,k) { return [k,v] }).sortBy(function (o) { return o[1] }).last()[0];
+            $("#result").html(result_template({ result: result, hit: hit }));
+          });
+        }
+      });
+    });
+
     </script>
   </body>
 </html>
