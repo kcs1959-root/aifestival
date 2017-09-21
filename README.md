@@ -21,6 +21,8 @@ canvas にお絵かきして文字の判定をしたり、カメラで画像を�
 $ FLASK_APP=index.py flask run
 ```
 
+ブラウザで `http://127.0.0.1:5000/` にアクセスして遊びましょう。Chrome だとうまく動かない :innocent: ので、firefox などを使いましょう。
+
 ### 3. Twitter で遊ぶ
 Twitter Developers で Consumer Token や Access Token などを発行したら以下の内容で `credentials.py` を作りましょう。
 
